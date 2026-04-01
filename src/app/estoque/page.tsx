@@ -1,162 +1,269 @@
 "use client";
 
+// [AULA DE REACT & ARQUITETURA DE DADOS]
+// Aqui lidamos com o inventário. Muito importante termos controle do que entra e sai da horta.
 import { useState, useEffect } from "react";
-import { Plus, Minus, AlertTriangle, Loader2, Save } from "lucide-react";
+// Importamos os ícones do Lucide. Note como selecionamos ícones semânticos (com significado)!
+import { Plus, Package, Sprout, Wrench, Droplets, Loader2, Search, Trash2, Edit2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
+// Definindo o que existe de fato numa linha da nossa tabela 'estoque' lá no Supabase
 type EstoqueItem = {
   id: string;
   item: string;
   categoria: string;
   quantidade: number;
-  unidade: string;
   quantidade_minima: number;
+  unidade: string;
+  data_atualizacao: string | null;
+};
+
+// [AULA DE UX DESIGN]
+// No lugar de imagens quebradas ou links difíceis de manter (pois usuários muitas vezes não têm fotos de uma enxada ou adubo),
+// Mapeamos a "categoria" escrita no banco de dados para um Ícone vetorizado de altíssima qualidade.
+const getCategoryIcon = (categoria: string) => {
+  switch (categoria.toLowerCase()) {
+    case 'semente':
+    case 'mudas':
+      return <Sprout className="w-8 h-8 text-[#2d5a27]" />; // Verde folha
+    case 'ferramenta':
+    case 'ferramentas':
+      return <Wrench className="w-8 h-8 text-[#4a6549]" />; // Verde Musgo
+    case 'insumo':
+    case 'adubo':
+      return <Package className="w-8 h-8 text-[#915905]" />; // Marrom terra
+    case 'irrigação':
+    case 'agua':
+      return <Droplets className="w-8 h-8 text-blue-500" />;
+    default:
+      return <Package className="w-8 h-8 text-slate-400" />;
+  }
 };
 
 export default function Estoque() {
   const [estoque, setEstoque] = useState<EstoqueItem[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // State for creating new item
   const [showForm, setShowForm] = useState(false);
-  const [novoItem, setNovoItem] = useState({
-    item: "", categoria: "Insumo", quantidade: 0, unidade: "kg", quantidade_minima: 1
+  const [busca, setBusca] = useState(""); // Estado simplificado para a barra de pesquisa
+  
+  // O formData guarda o rascunho de um novo item antes de ser salvo
+  const [formData, setFormData] = useState({
+    item: "",
+    categoria: "Insumo",
+    quantidade: 0,
+    quantidade_minima: 0,
+    unidade: "kg",
   });
 
-  const carregarEstoque = async () => {
-    const { data, error } = await supabase.from('estoque').select('*').order('item', { ascending: true });
-    if (!error && data) {
-      setEstoque(data);
-    }
+  const fetchEstoque = async () => {
+    setLoading(true);
+    // Trazemos em ordem alfabética do nome do item
+    const { data } = await supabase.from('estoque').select('*').order('item');
+    if (data) setEstoque(data);
     setLoading(false);
   };
 
   useEffect(() => {
-    carregarEstoque();
+    fetchEstoque();
   }, []);
 
-  const atualizarQtd = async (id: string, qtdAtual: number, delta: number) => {
-    const novaQtd = Math.max(0, qtdAtual + delta);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from('estoque').insert([formData]);
     
-    // Optistic update
-    setEstoque(estoque.map(e => e.id === id ? { ...e, quantidade: novaQtd } : e));
-    
-    // DB update
-    await supabase.from('estoque').update({ quantidade: novaQtd }).eq('id', id);
+    if (error) {
+       alert("Erro ao salvar no estoque: " + error.message);
+       console.error(error);
+       return;
+    }
+
+    setShowForm(false);
+    // Limpar após salvar
+    setFormData({ item: "", categoria: "Insumo", quantidade: 0, quantidade_minima: 0, unidade: "kg" });
+    fetchEstoque();
   };
 
-  const criarItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!novoItem.item.trim()) return;
-    
-    const { error } = await supabase.from('estoque').insert([novoItem]);
-    if (!error) {
-      setShowForm(false);
-      setNovoItem({ item: "", categoria: "Insumo", quantidade: 0, unidade: "kg", quantidade_minima: 1 });
-      carregarEstoque();
+  // Botão de deletar rápido e silencioso (apaga e já atualiza a lista)
+  const handleDelete = async (id: string) => {
+    if (confirm("Tem certeza que deseja remover este item?")) {
+      await supabase.from('estoque').delete().eq('id', id);
+      fetchEstoque();
     }
   };
 
+  // [AULA DE JAVASCRIPT: FILTER]
+  // Aqui pegamos a lista cheia (`estoque`) e deixamos passar apenas os itens cujo nome bate com o texto da barra de busca.
+  const estoqueFiltrado = estoque.filter(item => 
+    item.item.toLowerCase().includes(busca.toLowerCase()) || 
+    item.categoria.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-[50vh]"><Loader2 className="w-10 h-10 animate-spin text-sage-600 opacity-50" /></div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-sage-700">Controle de Estoque</h1>
-        <button 
-          onClick={() => setShowForm(!showForm)}
-          className="bg-sage-600 hover:bg-sage-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors w-full sm:w-auto flex justify-center items-center gap-2"
+    <div className="space-y-8 animate-in fade-in duration-500">
+      
+      {/* CABEÇALHO */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-4xl font-black font-manrope text-sage-700 tracking-tight">Estoque</h1>
+        
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 bg-sage-600 hover:bg-sage-700 text-white px-5 py-3 rounded-2xl transition-all shadow-sm hover:shadow-md font-bold tracking-wide w-full sm:w-auto justify-center"
         >
-          {showForm ? "✕ Fechar" : "+ Cadastrar Item"}
+          <Plus className="w-5 h-5" />
+          Novo Item
         </button>
       </div>
 
+      {/* BARRA DE PESQUISA (Glass Panel Search) */}
+      <div className="bg-white rounded-[2rem] p-3 shadow-[0_4px_25px_rgba(21,66,18,0.03)] flex items-center gap-3">
+        <div className="bg-sage-50 p-3 rounded-xl text-sage-600">
+          <Search className="w-5 h-5" />
+        </div>
+        <input 
+          type="text"
+          placeholder="Buscar por nome ou categoria (Ex: Adubo, Enxada...)"
+          className="flex-1 bg-transparent border-0 focus:ring-0 text-sage-700 placeholder-sage-300 font-bold outline-none text-lg"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+      </div>
+
+      {/* MODAL / FORMULÁRIO DE ADIÇÃO */}
       {showForm && (
-        <form onSubmit={criarItem} className="bg-sage-100 p-6 rounded-xl border border-sage-200 shadow-inner grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end animate-in fade-in slide-in-from-top-4">
-          <div className="space-y-1 sm:col-span-2">
-            <label className="text-xs font-bold text-sage-700">Nome do Item</label>
-            <input required type="text" value={novoItem.item} onChange={e => setNovoItem({...novoItem, item: e.target.value})} className="w-full p-2 rounded-lg border-gray-300 focus:ring-sage-500 text-sm" placeholder="Ex: Adubo NPK" />
+        <div className="fixed inset-0 bg-sage-700/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-2xl font-black font-manrope mb-6 text-sage-700">Entrada de Item</h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-sage-700/80 mb-2 uppercase tracking-wider">Nome do Item</label>
+                <input
+                  type="text" required
+                  className="w-full bg-sage-50/50 border-0 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 rounded-xl p-4 outline-none transition-all"
+                  value={formData.item} onChange={(e) => setFormData({...formData, item: e.target.value})}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-sage-700/80 mb-2 uppercase tracking-wider">Categoria</label>
+                  <select
+                    className="w-full bg-sage-50/50 border-0 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 rounded-xl p-4 outline-none transition-all"
+                    value={formData.categoria} onChange={(e) => setFormData({...formData, categoria: e.target.value})}
+                  >
+                    <option value="Semente">Sementes / Mudas</option>
+                    <option value="Insumo">Insumo (Terra, Adubo, etc)</option>
+                    <option value="Ferramenta">Ferramenta / Equipamento</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-sage-700/80 mb-2 uppercase tracking-wider">Unidade</label>
+                  <select
+                    className="w-full bg-sage-50/50 border-0 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 rounded-xl p-4 outline-none transition-all"
+                    value={formData.unidade} onChange={(e) => setFormData({...formData, unidade: e.target.value})}
+                  >
+                    <option value="un">Unidades (un)</option>
+                    <option value="kg">Quilos (kg)</option>
+                    <option value="g">Gramas (g)</option>
+                    <option value="L">Litros (L)</option>
+                    <option value="pacotes">Pacotes</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-sage-700/80 mb-2 uppercase tracking-wider">Quantidade Atual</label>
+                  <input
+                    type="number" required min="0" step="0.1"
+                    className="w-full bg-sage-50/50 border-0 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 rounded-xl p-4 outline-none transition-all"
+                    value={formData.quantidade} onChange={(e) => setFormData({...formData, quantidade: parseFloat(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#ba1a1a]/80 mb-2 uppercase tracking-wider">Alerta de Falta (Mínimo)</label>
+                  <input
+                    type="number" required min="0" step="0.1"
+                    className="w-full bg-[#ffdad6]/40 border-0 text-[#93000a] font-bold focus:ring-4 focus:ring-[#ffdad6] rounded-xl p-4 outline-none transition-all"
+                    value={formData.quantidade_minima} onChange={(e) => setFormData({...formData, quantidade_minima: parseFloat(e.target.value)})}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button" onClick={() => setShowForm(false)}
+                  className="flex-1 bg-white hover:bg-sage-50 text-sage-700 px-4 py-3 rounded-xl font-bold border border-sage-100 transition-all"
+                >Cancelar</button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl font-bold shadow-sm transition-all"
+                >Salvar Item</button>
+              </div>
+            </form>
           </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-sage-700">Categoria</label>
-            <select value={novoItem.categoria} onChange={e => setNovoItem({...novoItem, categoria: e.target.value})} className="w-full p-2 rounded-lg border-gray-300 bg-white text-sm">
-              <option>Insumo</option>
-              <option>Semente</option>
-              <option>Ferramenta</option>
-              <option>Outro</option>
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-sage-700">Qtd / Un</label>
-            <div className="flex gap-2">
-              <input type="number" min="0" value={novoItem.quantidade} onChange={e => setNovoItem({...novoItem, quantidade: Number(e.target.value)})} className="w-full p-2 rounded-lg text-sm" />
-              <select value={novoItem.unidade} onChange={e => setNovoItem({...novoItem, unidade: e.target.value})} className="w-full max-w-20 p-2 rounded-lg bg-white text-sm">
-                <option>kg</option>
-                <option>g</option>
-                <option>un</option>
-                <option>L</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" className="bg-sage-700 text-white p-2 h-[38px] rounded-lg w-full flex justify-center items-center hover:bg-sage-800">
-            <Save className="w-4 h-4" />
-          </button>
-        </form>
+        </div>
       )}
 
-      {loading ? (
-        <div className="flex justify-center items-center py-20 text-sage-500">
-          <Loader2 className="w-8 h-8 animate-spin" />
-        </div>
-      ) : estoque.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-xl border border-sage-100 text-gray-500">
-          <p>Nenhum item cadastrado no estoque ainda.</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-sage-100 overflow-hidden">
-          <ul className="divide-y divide-sage-50">
-            {estoque.map((item) => {
-              const isLow = item.quantidade <= item.quantidade_minima;
-              return (
-                <li key={item.id} className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-sage-50/50 transition-colors">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-sage-800 text-lg">{item.item}</h3>
-                      {isLow && <span className="bg-alert/10 text-alert-hover text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" /> Baixo
-                      </span>}
-                    </div>
-                    <p className="text-sm text-gray-500">{item.categoria} • Mínimo ideal: {item.quantidade_minima}{item.unidade}</p>
+      {/* GRID DO INVENTÁRIO (No Design: Lista ou Grade) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {estoqueFiltrado.length === 0 ? (
+           <div className="col-span-full text-center p-10 bg-white rounded-3xl border border-sage-100/50 text-sage-500 font-medium">
+             Nada encontrado. Cadastre itens ou mude seus termos de busca.
+           </div>
+        ) : (
+          estoqueFiltrado.map((item) => (
+            <div key={item.id} className="group bg-white rounded-3xl p-6 shadow-[0_4px_25px_rgba(21,66,18,0.03)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-4">
+                  {/* Ícone Dinâmico semântico */}
+                  <div className="bg-sage-50 p-4 rounded-2xl">
+                    {getCategoryIcon(item.categoria)}
                   </div>
-                  
-                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                    <div className="text-center min-w-16">
-                      <span className={`text-2xl font-black ${isLow ? 'text-alert' : 'text-sage-700'}`}>
-                        {item.quantidade}
-                      </span>
-                      <span className="text-xs text-gray-400 font-bold ml-1">{item.unidade}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <button 
-                        onClick={() => atualizarQtd(item.id, item.quantidade, -1)}
-                        className="p-3 bg-white rounded-xl text-sage-700 hover:bg-red-50 hover:text-red-500 transition-colors shadow-sm border border-sage-100 disabled:opacity-50"
-                        disabled={item.quantidade === 0}
-                      >
-                        <Minus className="w-5 h-5 font-bold" />
-                      </button>
-                      <button 
-                        onClick={() => atualizarQtd(item.id, item.quantidade, 1)}
-                        className="p-3 bg-white rounded-xl text-sage-700 hover:bg-sage-100 transition-colors shadow-sm border border-sage-100"
-                      >
-                        <Plus className="w-5 h-5 font-bold" />
-                      </button>
-                    </div>
+                  <div>
+                    <h3 className="text-xl font-black font-manrope text-sage-700 tracking-tight">{item.item}</h3>
+                    <p className="text-sage-400 font-bold uppercase tracking-wider text-[10px] mt-1">{item.categoria}</p>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+                </div>
+                
+                {/* Lógica condicional (IF): Se tem pouca quantidade, fica com cápsula de destaque vermelha */}
+                {item.quantidade <= item.quantidade_minima && (
+                  <span className="bg-[#ffdad6] text-[#ba1a1a] text-[10px] uppercase font-bold px-3 py-1 rounded-full animate-pulse">
+                    Faltando
+                  </span>
+                )}
+              </div>
+
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="text-sm font-bold text-sage-400 uppercase tracking-widest mb-1">Volume</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-4xl font-black font-manrope tracking-tighter ${
+                      item.quantidade <= item.quantidade_minima ? "text-[#ba1a1a]" : "text-sage-700"
+                    }`}>
+                      {item.quantidade}
+                    </span>
+                    <span className="text-sage-500 font-bold">{item.unidade}</span>
+                  </div>
+                </div>
+
+                {/* Ações (Aparecem só no hover em desktop) */}
+                <div className="flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => handleDelete(item.id)} className="p-3 bg-sage-50 hover:bg-[#ffdad6] hover:text-[#ba1a1a] text-sage-400 rounded-xl transition-colors">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

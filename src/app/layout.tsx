@@ -1,23 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// [AULA DE NEXT.JS] 
+// A biblioteca next/font/google baixa e otimiza automaticamente as fontes do Google Fonts no servidor.
+// Sem chamadas externas que atrasariam o carregamento da nossa interface (FOUC).
+import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
 import { Layout } from "@/components/Layout";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Configuração da Fonte Manrope (Usada para os Títulos pesados e elegantes)
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Configuração da Fonte Inter (A mais limpa para tabelas, números e UI funcional)
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
+// [AULA DE SEO] Metadados preenchem a aba do navegador e como a página aparece no Google/WhatsApp.
 export const metadata: Metadata = {
-  title: "Horta Comum MVP",
-  description: "Sistema para gestão de hortas comunitárias",
+  title: "Horta Comum",
+  description: "Sistema para gestão de hortas comunitárias e painel de estoque.",
 };
 
+// Layout Raiz: Tudo o que estiver aqui "abraça" as outras páginas (que virão através do {children}).
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,9 +33,11 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // Injetamos as variáveis das fontes localmente na tag HTML.
+      className={`${manrope.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-inter bg-background text-foreground">
+        {/* Envolvemos nosso app inteiro no componente de barra lateral (Sidebar) */}
         <Layout>{children}</Layout>
       </body>
     </html>

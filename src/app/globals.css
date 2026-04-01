@@ -1,43 +1,58 @@
 @import "tailwindcss";
 
+/* 
+  [AULA DE CSS PARA NEXT.JS]
+  :root define as variáveis globais de CSS que podemos usar em todo o projeto.
+  Aqui estamos declarando nossa paleta "The Botanical Grid", focada em tons orgânicos e natureza.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8faf8; /* Um tom "off-white" de papel reciclado, muito suave para não cansar a vista */
+  --foreground: #191c1b; /* Quase preto, mas puxado para um cinza/esverdeado muito escuro (ajuda no contraste sem agredir) */
 }
 
 @theme inline {
-  --color-background-primary: #f8fafc;
+  /* 
+    O @theme inline é uma feature recente do Tailwind v4 para mapeamento de variáveis.
+    Aqui mapeamos nossas cores premium personalizadas.
+  */
+  --color-background-primary: #f8faf8;
   --color-background-secondary: #ffffff;
-  --color-foreground: #1e293b;
+  --color-foreground: #191c1b;
   
-  --color-sage-50: #f4f7f4;
-  --color-sage-100: #e3ebe3;
-  --color-sage-500: #7b9c7b;
-  --color-sage-600: #628262;
-  --color-sage-700: #4f684f;
+  /* Cores Principais - Sage (Verde Sálvia) & Forest */
+  --color-sage-50: #f2f4f2; /* Fundo de containers secundários */
+  --color-sage-100: #e6e9e7; /* Elementos em destaque leve */
+  --color-sage-300: #c2c9bb; /* Bordas ghost para delimitação (usado com transparência) */
+  --color-sage-500: #4a6549; /* Verde secundário */
+  --color-sage-600: #2d5a27; /* Container primário (Ex: fundo do botão ativo) */
+  --color-sage-700: #154212; /* Verde profundo (Ex: Texto de títulos muito fortes) */
   
-  --color-alert: #f97316;
-  --color-alert-hover: #ea580c;
-
-  --color-chart-1: #10b981; /* emerald */
-  --color-chart-2: #f59e0b; /* amber */
-  --color-chart-3: #6366f1; /* indigo */
-  --color-chart-4: #ec4899; /* pink */
-  --color-chart-5: #3b82f6; /* blue */
-
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Cores de Alerta e Interação */
+  --color-alert: #ba1a1a; /* Vermelho erro suave */
+  --color-alert-hover: #93000a;
+  
+  /* As fontes que importamos no layout.tsx agora viraram variáveis do Tailwind! */
+  --font-manrope: var(--font-manrope);
+  --font-inter: var(--font-inter);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* A fonte padrão do app todo vai ser Inter (para legibilidade) */
+  font-family: var(--font-inter), sans-serif;
+  /* Suaviza o texto em todas as telas */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 
+  [AULA DE DESIGN] Glassmorphism utilitário:
+  Criamos uma classe customizada (.glass-panel) para gerar aquele efeito de "vidro fosco"
+  bem premium, em vez de usar uma cor sólida e dura. 
+*/
+.glass-panel {
+  background: rgba(248, 250, 248, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
