@@ -1,62 +1,79 @@
 "use client";
 
-// [AULA DE GRÁFICOS (RECHARTS)]
-// O Recharts é uma das bibliotecas gráficas mais famosas e amigáveis para React.
-// Importamos as "peças" lego que formam um gráfico: O container responsável por se adaptar a tela (ResponsiveContainer),
-// o gráfico de pizza (PieChart), o gráfico de barras (BarChart), o eixo X, Eixo Y, entre outros.
 import { useEffect, useState } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { supabase } from "@/lib/supabase";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sprout, Leaf, PackageSearch, AlertTriangle } from "lucide-react";
 
 export default function Relatorios() {
   const [loading, setLoading] = useState(true);
   
-  // Guardamos as fatias da pizza do Estoque aqui: Nome do item e "valor" o quanto tem.
-  const [dataInsumos, setDataInsumos] = useState<{name: string, value: number}[]>([]);
-  // Guardamos as barras de canteiros aqui: Nome do status e a "quantidade".
-  const [dataCanteiros, setDataCanteiros] = useState<{name: string, quantidade: number}[]>([]);
+  const [dataInsumos, setDataInsumos] = useState<{name: string, value: number, perc: number}[]>([]);
+  const [dataCanteiros, setDataCanteiros] = useState<{name: string, quantidade: number, perc: number}[]>([]);
 
-  // Carrega ao abrir a página
+  const [kpis, setKpis] = useState({
+    totalCanteiros: 0,
+    canteirosAtivos: 0,
+    totalItensEstoque: 0,
+    itensEmAlerta: 0
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       
-      // === GRÁFICO 1: PIZZA DO ESTOQUE ===
-      const { data: estoque } = await supabase.from('estoque').select('categoria, quantidade');
+      // === DADOS DE ESTOQUE ===
+      const { data: estoque } = await supabase.from('estoque').select('*');
       if (estoque) {
-        // [AULA DE JAVASCRIPT: REDUCE] - O Reduce "amassa" ou "concatena" coisas parecidas.
-        // Se temos 3 itens "Semente" com quantidades 10, 5, e 2... ele soma tudo em 17.
         const agrupado = estoque.reduce((acc: Record<string, number>, item) => {
-          acc[item.categoria] = (acc[item.categoria] || 0) + Number(item.quantidade);
+          if (Number(item.quantidade) > 0) {
+            acc[item.categoria] = (acc[item.categoria] || 0) + Number(item.quantidade);
+          }
           return acc;
         }, {});
         
-        // Reformatamos matematicamente do formato do Javascript pro formato que o Gráfico Recharts aceita.
+        const totalEstoqueVol = Object.values(agrupado).reduce((a,b) => a+b, 0);
+
         const pieData = Object.keys(agrupado).map(key => ({
           name: key,
-          value: agrupado[key]
+          value: agrupado[key],
+          perc: totalEstoqueVol > 0 ? Math.round((agrupado[key] / totalEstoqueVol) * 100) : 0
         }));
         
-        // Se caso a lista pieData estiver vazia (> 0), passamos um "dados ficticios em branco"
-        setDataInsumos(pieData.length > 0 ? pieData : [{name: 'Sem dados', value: 1}]);
+        setDataInsumos(pieData);
+
+        const emAlerta = estoque.filter(i => i.quantidade <= i.quantidade_minima).length;
+        
+        setKpis(prev => ({
+          ...prev,
+          totalItensEstoque: estoque.length,
+          itensEmAlerta: emAlerta
+        }));
       }
 
-      // === GRÁFICO 2: BARRAS DOS CANTEIROS ===
+      // === DADOS DE CANTEIROS ===
       const { data: canteiros } = await supabase.from('canteiros').select('status');
       if (canteiros) {
-        // Novamente o reduce contando a mesma coisa. Se tem 3 canteiros "Ativo", devolve Ativo = 3.
         const agrupadoCant = canteiros.reduce((acc: Record<string, number>, item) => {
           acc[item.status] = (acc[item.status] || 0) + 1;
           return acc;
         }, {});
 
+        const totalCant = canteiros.length;
         const barData = Object.keys(agrupadoCant).map(key => ({
-          // Usamos ".replace" porque "Aguardando Colheita" é um texto bem longo, então quebramos para o gráfico não ficar espremido.
-          name: key.replace("Aguardando ", "Ag. "), 
-          quantidade: agrupadoCant[key]
-        }));
+          name: key, 
+          quantidade: agrupadoCant[key],
+          perc: totalCant > 0 ? Math.round((agrupadoCant[key] / totalCant) * 100) : 0
+        })).sort((a, b) => b.quantidade - a.quantidade);
+
         setDataCanteiros(barData);
+
+        const ativos = canteiros.filter(c => c.status !== 'Vazio').length;
+        setKpis(prev => ({
+          ...prev,
+          totalCanteiros: totalCant,
+          canteirosAtivos: ativos
+        }));
       }
 
       setLoading(false);
@@ -65,15 +82,25 @@ export default function Relatorios() {
     fetchData();
   }, []);
 
-  // [AULA DE DESIGN: CORES EXCLUSIVAS]
-  // Em vez de usar as cores neon antigas, injetamos a The Botanical Grid na biblioteca gráfica
   const BOTANICAL_COLORS = [
-    '#2d5a27', // sage-600
-    '#915905', // terra / amarelo
-    '#4a6549', // sage-500
-    '#c2c9bb', // sage-300
-    '#154212', // verde ultra escuro
+    '#137333', // Green (Em Desenvolvimento)
+    '#0369a1', // Blue (Colhido)
+    '#92400e', // Orange (Aguardando Colheita)
+    '#8c5a2b', // Brown (Sementeira)
+    '#475569', // Slate (Vazio)
   ];
+
+  const getStatusColors = (status: string) => {
+    const track = "bg-[#e2e8e0]"; // Fundo neutro para não atrapalhar a visualização
+    switch (status) {
+      case 'Sementeira': return { fill: 'bg-[#8c5a2b]', track, text: 'text-[#8c5a2b]' }; 
+      case 'Em Desenvolvimento': return { fill: 'bg-[#137333]', track, text: 'text-[#137333]' };
+      case 'Aguardando Colheita': return { fill: 'bg-[#92400e]', track, text: 'text-[#92400e]' }; 
+      case 'Colhido': return { fill: 'bg-[#0369a1]', track, text: 'text-[#0369a1]' };
+      case 'Vazio':
+      default: return { fill: 'bg-[#475569]', track, text: 'text-[#475569]' };
+    }
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center h-[50vh]"><Loader2 className="w-10 h-10 animate-spin text-sage-600 opacity-50" /></div>;
@@ -81,82 +108,138 @@ export default function Relatorios() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <h1 className="text-4xl font-black font-manrope text-sage-700 tracking-tight">Relatórios Analíticos</h1>
+      <div>
+        <h1 className="text-3xl lg:text-4xl font-black font-manrope text-sage-800 tracking-tight mb-2">Visão Geral</h1>
+        <p className="text-sm font-medium text-sage-500">Desempenho e saúde do ecossistema botânico em tempo real.</p>
+      </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* 1. SEÇÃO DOS CARTÕES DE INDICADORES (KPIs) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         
-        {/* GRÁFICO DE INSUMOS (PIZZA / DONUT) */}
-        <div className="bg-white rounded-[2rem] p-8 shadow-[0_4px_25px_rgba(21,66,18,0.03)] flex flex-col">
-          <h2 className="text-2xl font-black font-manrope text-sage-700 mb-6 tracking-tight">Volume por Categoria <span className="opacity-50 text-sm">(Estoque)</span></h2>
-          
-          <div className="h-72 w-full flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={dataInsumos}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={80} // O InnerRadius transforma a fatia de pizza num "Donut"
-                  outerRadius={100}
-                  paddingAngle={5} // Espaçamento branco e limpo entre as fatias
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {dataInsumos.map((entry, index) => (
-                    // Injeta a cor certa da nossa lista baseada na posição (index)
-                    <Cell key={`cell-${index}`} fill={BOTANICAL_COLORS[index % BOTANICAL_COLORS.length]} />
-                  ))}
-                </Pie>
-                {/* Modificamos o flutuante que aparece ao colocar o mouse por cima */}
-                <Tooltip 
-                  formatter={(value) => [`${value}`, 'Volume']}
-                  contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          
-          {/* Legenda Customizada (Trocamos a legenda padrão feia do recharts por essa bonitinha HTML) */}
-          <div className="flex justify-center flex-wrap gap-4 text-sm mt-6 pt-6 border-t border-sage-50">
-            {dataInsumos.map((entry, index) => (
-              <div key={entry.name} className="flex items-center gap-2 font-bold tracking-wider uppercase text-xs">
-                <span className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: BOTANICAL_COLORS[index % BOTANICAL_COLORS.length] }}></span>
-                <span className="text-sage-600">{entry.name}</span>
-              </div>
-            ))}
+        <div className="bg-white rounded-[1.5rem] p-6 shadow-[0_2px_15px_rgba(21,66,18,0.03)] flex flex-col justify-between h-[120px]">
+          <h3 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest">Total de Canteiros</h3>
+          <div className="flex items-end gap-2 mt-auto">
+            <p className="text-[2.75rem] font-black font-manrope text-sage-800 leading-none">{kpis.totalCanteiros}</p>
+            <div className="text-sage-300 mb-1.5"><Sprout className="w-4 h-4"/></div>
           </div>
         </div>
 
-        {/* GRÁFICO DE STATUS CANTEIROS (BARRAS) */}
-        <div className="bg-white rounded-[2rem] p-8 shadow-[0_4px_25px_rgba(21,66,18,0.03)] flex flex-col">
-          <h2 className="text-2xl font-black font-manrope text-sage-700 mb-6 tracking-tight">Capacidade Ocupada <span className="opacity-50 text-sm">(Canteiros)</span></h2>
-          
-          {dataCanteiros.length > 0 ? (
-            <div className="h-72 w-full flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dataCanteiros} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e6e9e7" />
-                  
-                  {/* AxisLine tira a linha contínua do eixo, limpando o design */}
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#4a6549', fontWeight: 'bold'}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#4a6549', fontWeight: 'bold'}} allowDecimals={false} />
-                  
-                  <Tooltip 
-                    cursor={{fill: '#f2f4f2', radius: 8}}
-                    contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}  
-                  />
-                  {/* Nossa barra arredondada em cor Sage */}
-                  <Bar dataKey="quantidade" fill="#2d5a27" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+        <div className="bg-white rounded-[1.5rem] p-6 shadow-[0_2px_15px_rgba(21,66,18,0.03)] flex flex-col justify-between h-[120px]">
+          <h3 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest">Canteiros Ativos</h3>
+          <div className="flex items-end gap-2 mt-auto">
+            <p className="text-[2.75rem] font-black font-manrope text-sage-800 leading-none">{kpis.canteirosAtivos}</p>
+            <div className="text-sage-300 mb-1.5"><Leaf className="w-4 h-4"/></div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[1.5rem] p-6 shadow-[0_2px_15px_rgba(21,66,18,0.03)] flex flex-col justify-between h-[120px]">
+          <h3 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest">Itens no Estoque</h3>
+          <div className="flex items-end gap-2 mt-auto">
+            <p className="text-[2.75rem] font-black font-manrope text-sage-800 leading-none">{kpis.totalItensEstoque}</p>
+            <div className="text-sage-300 mb-1.5"><PackageSearch className="w-4 h-4"/></div>
+          </div>
+        </div>
+
+        <div className={`rounded-[1.5rem] p-6 shadow-[0_2px_15px_rgba(21,66,18,0.03)] flex flex-col justify-between h-[120px] ${kpis.itensEmAlerta > 0 ? 'bg-[#ffdad6]' : 'bg-white'}`}>
+          <h3 className={`text-[10px] font-bold uppercase tracking-widest ${kpis.itensEmAlerta > 0 ? 'text-[#ba1a1a]' : 'text-sage-400'}`}>Itens em Alerta</h3>
+          <div className="flex items-end gap-2 mt-auto">
+            <p className={`text-[2.75rem] font-black font-manrope leading-none ${kpis.itensEmAlerta > 0 ? 'text-[#93000a]' : 'text-sage-800'}`}>
+              {kpis.itensEmAlerta}
+            </p>
+            <div className={`mb-1.5 ${kpis.itensEmAlerta > 0 ? 'text-[#ba1a1a]/50' : 'text-sage-300'}`}>
+              <AlertTriangle className="w-4 h-4"/>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center flex-1 text-sage-400 bg-sage-50/50 rounded-2xl border border-sage-100/50 p-10">
-              <span className="font-bold">Sem dados de canteiros.</span>
-            </div>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* GRÁFICO 1: VOLUME POR CATEGORIA (ESTOQUE) */}
+      <div className="bg-white rounded-[2rem] p-6 lg:p-8 shadow-[0_2px_15px_rgba(21,66,18,0.03)]">
+        <h2 className="text-xl font-bold text-sage-800 mb-2">Volume por Categoria (Estoque)</h2>
+        <p className="text-xs text-sage-500 mb-8 max-w-[500px] leading-relaxed">Distribuição volumétrica baseada no inventário atual de sementes, ferramentas e insumos orgânicos.</p>
+        
+        <div className="flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-16">
+          {/* Legend side */}
+          <div className="flex-1 space-y-3 w-full">
+            {dataInsumos.length > 0 ? dataInsumos.map((entry, index) => (
+              <div key={entry.name} className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: BOTANICAL_COLORS[index % BOTANICAL_COLORS.length] }}></div>
+                <div className="text-sm font-medium text-sage-600 flex-1">{entry.name} <span className="text-sage-400">({entry.perc}%)</span></div>
+              </div>
+            )) : (
+              <div className="text-sage-400 text-sm italic">Nenhum item em estoque.</div>
+            )}
+          </div>
+          
+          {/* Chart side */}
+          <div className="relative w-[180px] h-[180px] lg:w-[220px] lg:h-[220px] flex-shrink-0">
+            {dataInsumos.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dataInsumos}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius="70%"
+                      outerRadius="100%"
+                      paddingAngle={0}
+                      dataKey="value"
+                      stroke="#fff"
+                      strokeWidth={4}
+                    >
+                      {dataInsumos.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={BOTANICAL_COLORS[index % BOTANICAL_COLORS.length]} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Center text */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[22px] lg:text-2xl font-black text-sage-800">100%</span>
+                  <span className="text-[10px] font-bold text-sage-400 tracking-wider">TOTAL</span>
+                </div>
+              </>
+            ) : (
+                <div className="w-full h-full rounded-full border-[20px] border-sage-50"></div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* GRÁFICO 2: CAPACIDADE OCUPADA (CANTEIROS) */}
+      <div className="bg-sage-50/50 rounded-[2rem] p-6 lg:p-8">
+        <h2 className="text-xl font-bold text-sage-800 mb-8">Capacidade Ocupada (Canteiros)</h2>
+        
+        {dataCanteiros.length > 0 ? (
+          <div className="space-y-7">
+            {dataCanteiros.map((entry) => {
+              const { fill, track, text } = getStatusColors(entry.name);
+              
+              return (
+                <div key={entry.name}>
+                  <div className="flex justify-between items-end mb-2.5">
+                    <span className={`text-xs font-bold uppercase ${text}`}>{entry.name}</span>
+                    <span className={`text-[11px] font-bold ${text}`}>{entry.perc}%</span>
+                  </div>
+                  <div className={`h-2.5 w-full rounded-full ${track} overflow-hidden flex`}>
+                    <div 
+                      className={`h-full ${fill} rounded-full`} 
+                      style={{ width: `${entry.perc}%`, minWidth: entry.perc > 0 ? '4px' : '0' }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 text-sage-500 text-sm">
+            <Sprout className="w-5 h-5 opacity-50" />
+            <span>Nenhum canteiro registrado.</span>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
