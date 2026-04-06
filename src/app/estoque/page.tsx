@@ -1,13 +1,10 @@
 "use client";
 
-// [AULA DE REACT & ARQUITETURA DE DADOS]
-// Aqui lidamos com o inventário. Muito importante termos controle do que entra e sai da horta.
 import { useState, useEffect } from "react";
-// Importamos os ícones do Lucide. Note como selecionamos ícones semânticos (com significado)!
-import { Plus, Package, Sprout, Wrench, Droplets, Loader2, Search, Trash2, Edit2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Plus, Package, Sprout, Wrench, Droplets, Loader2, Search, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-// Definindo o que existe de fato numa linha da nossa tabela 'estoque' lá no Supabase
 type EstoqueItem = {
   id: string;
   item: string;
@@ -18,20 +15,17 @@ type EstoqueItem = {
   data_atualizacao: string | null;
 };
 
-// [AULA DE UX DESIGN]
-// No lugar de imagens quebradas ou links difíceis de manter (pois usuários muitas vezes não têm fotos de uma enxada ou adubo),
-// Mapeamos a "categoria" escrita no banco de dados para um Ícone vetorizado de altíssima qualidade.
 const getCategoryIcon = (categoria: string) => {
   switch (categoria.toLowerCase()) {
     case 'semente':
     case 'mudas':
-      return <Sprout className="w-8 h-8 text-[#2d5a27]" />; // Verde folha
+      return <Sprout className="w-8 h-8 text-[#2d5a27]" />;
     case 'ferramenta':
     case 'ferramentas':
-      return <Wrench className="w-8 h-8 text-[#4a6549]" />; // Verde Musgo
+      return <Wrench className="w-8 h-8 text-[#4a6549]" />;
     case 'insumo':
     case 'adubo':
-      return <Package className="w-8 h-8 text-[#915905]" />; // Marrom terra
+      return <Package className="w-8 h-8 text-[#915905]" />;
     case 'irrigação':
     case 'agua':
       return <Droplets className="w-8 h-8 text-blue-500" />;
@@ -44,9 +38,10 @@ export default function Estoque() {
   const [estoque, setEstoque] = useState<EstoqueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [busca, setBusca] = useState(""); // Estado simplificado para a barra de pesquisa
+  const [busca, setBusca] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   
-  // O formData guarda o rascunho de um novo item antes de ser salvo
   const [formData, setFormData] = useState({
     item: "",
     categoria: "Insumo",
@@ -57,42 +52,83 @@ export default function Estoque() {
 
   const fetchEstoque = async () => {
     setLoading(true);
-    // Trazemos em ordem alfabética do nome do item
     const { data } = await supabase.from('estoque').select('*').order('item');
     if (data) setEstoque(data);
     setLoading(false);
   };
 
   useEffect(() => {
+    setMounted(true);
     fetchEstoque();
   }, []);
 
+  useEffect(() => {
+    if (showForm) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showForm]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from('estoque').insert([formData]);
     
-    if (error) {
-       alert("Erro ao salvar no estoque: " + error.message);
-       console.error(error);
-       return;
+    if (editingId) {
+      const { error } = await supabase.from('estoque').update(formData).eq('id', editingId);
+      if (error) {
+        alert("Erro ao atualizar item: " + error.message);
+        return;
+      }
+    } else {
+      const { error } = await supabase.from('estoque').insert([formData]);
+      if (error) {
+         alert("Erro ao criar item no banco: " + error.message);
+         console.error(error);
+         return;
+      }
     }
 
     setShowForm(false);
-    // Limpar após salvar
+    setEditingId(null);
     setFormData({ item: "", categoria: "Insumo", quantidade: 0, quantidade_minima: 0, unidade: "kg" });
     fetchEstoque();
   };
 
-  // Botão de deletar rápido e silencioso (apaga e já atualiza a lista)
-  const handleDelete = async (id: string) => {
-    if (confirm("Tem certeza que deseja remover este item?")) {
-      await supabase.from('estoque').delete().eq('id', id);
-      fetchEstoque();
+  const handleDelete = async () => {
+    if (!editingId) return;
+    if (!confirm("Tem certeza que deseja excluir este item permanentemente?")) return;
+    
+    const { error } = await supabase.from('estoque').delete().eq('id', editingId);
+    if (error) {
+      alert("Erro ao excluir: " + error.message);
+      return;
     }
+    setShowForm(false);
+    setEditingId(null);
+    fetchEstoque();
   };
 
-  // [AULA DE JAVASCRIPT: FILTER]
-  // Aqui pegamos a lista cheia (`estoque`) e deixamos passar apenas os itens cujo nome bate com o texto da barra de busca.
+  const openFormNovo = () => {
+    setEditingId(null);
+    setFormData({ item: "", categoria: "Insumo", quantidade: 0, quantidade_minima: 0, unidade: "kg" });
+    setShowForm(true);
+  };
+
+  const openFormEdit = (item: EstoqueItem) => {
+    setEditingId(item.id);
+    setFormData({
+      item: item.item,
+      categoria: item.categoria || "Insumo",
+      quantidade: item.quantidade || 0,
+      quantidade_minima: item.quantidade_minima || 0,
+      unidade: item.unidade || "kg"
+    });
+    setShowForm(true);
+  };
+
   const estoqueFiltrado = estoque.filter(item => 
     item.item.toLowerCase().includes(busca.toLowerCase()) || 
     item.categoria.toLowerCase().includes(busca.toLowerCase())
@@ -105,20 +141,18 @@ export default function Estoque() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
-      {/* CABEÇALHO */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-4xl font-black font-manrope text-sage-700 tracking-tight">Estoque</h1>
         
         <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-sage-600 hover:bg-sage-700 text-white px-5 py-3 rounded-2xl transition-all shadow-sm hover:shadow-md font-bold tracking-wide w-full sm:w-auto justify-center"
+          onClick={openFormNovo}
+          className="flex items-center gap-2 bg-sage-600 hover:bg-sage-700 text-white px-5 py-3 rounded-2xl transition-all shadow-sm focus:ring-4 focus:ring-sage-100/50 font-bold tracking-wide w-full sm:w-auto justify-center"
         >
           <Plus className="w-5 h-5" />
           Novo Item
         </button>
       </div>
 
-      {/* BARRA DE PESQUISA (Glass Panel Search) */}
       <div className="bg-white rounded-[2rem] p-3 shadow-[0_4px_25px_rgba(21,66,18,0.03)] flex items-center gap-3">
         <div className="bg-sage-50 p-3 rounded-xl text-sage-600">
           <Search className="w-5 h-5" />
@@ -132,27 +166,41 @@ export default function Estoque() {
         />
       </div>
 
-      {/* MODAL / FORMULÁRIO DE ADIÇÃO */}
-      {showForm && (
-        <div className="fixed inset-0 bg-sage-700/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200">
-            <h2 className="text-2xl font-black font-manrope mb-6 text-sage-700">Entrada de Item</h2>
+      {showForm && mounted && createPortal(
+        <div 
+          className="fixed inset-0 bg-sage-700/40 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowForm(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default">
+            
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black font-manrope text-sage-700">
+                {editingId ? "Editar Item" : "Registrar Item"}
+              </h2>
+              {editingId && (
+                <button type="button" onClick={handleDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all" title="Excluir Item">
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              )}
+            </div>
             
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-bold text-sage-700/80 mb-2 uppercase tracking-wider">Nome do Item</label>
+                <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Nome do Item</label>
                 <input
-                  type="text" required
-                  className="w-full bg-sage-50/50 border-0 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 rounded-xl p-4 outline-none transition-all"
+                  type="text" required placeholder="Ex: Enxada rotativa"
+                  className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all"
                   value={formData.item} onChange={(e) => setFormData({...formData, item: e.target.value})}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-sage-700/80 mb-2 uppercase tracking-wider">Categoria</label>
+                  <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Categoria</label>
                   <select
-                    className="w-full bg-sage-50/50 border-0 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 rounded-xl p-4 outline-none transition-all"
+                    className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all"
                     value={formData.categoria} onChange={(e) => setFormData({...formData, categoria: e.target.value})}
                   >
                     <option value="Semente">Sementes / Mudas</option>
@@ -161,9 +209,9 @@ export default function Estoque() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-sage-700/80 mb-2 uppercase tracking-wider">Unidade</label>
+                  <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Unidade</label>
                   <select
-                    className="w-full bg-sage-50/50 border-0 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 rounded-xl p-4 outline-none transition-all"
+                    className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all"
                     value={formData.unidade} onChange={(e) => setFormData({...formData, unidade: e.target.value})}
                   >
                     <option value="un">Unidades (un)</option>
@@ -175,20 +223,20 @@ export default function Estoque() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-sage-700/80 mb-2 uppercase tracking-wider">Quantidade Atual</label>
+                  <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Quantidade Atual</label>
                   <input
                     type="number" required min="0" step="0.1"
-                    className="w-full bg-sage-50/50 border-0 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 rounded-xl p-4 outline-none transition-all"
+                    className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all"
                     value={formData.quantidade} onChange={(e) => setFormData({...formData, quantidade: parseFloat(e.target.value)})}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-[#ba1a1a]/80 mb-2 uppercase tracking-wider">Alerta de Falta (Mínimo)</label>
+                  <label className="block text-xs font-bold text-[#ba1a1a]/80 mb-2 uppercase tracking-widest">Alerta de Falta (Mínimo)</label>
                   <input
                     type="number" required min="0" step="0.1"
-                    className="w-full bg-[#ffdad6]/40 border-0 text-[#93000a] font-bold focus:ring-4 focus:ring-[#ffdad6] rounded-xl p-4 outline-none transition-all"
+                    className="w-full bg-[#ffdad6]/40 border-2 border-transparent hover:bg-[#ffdad6]/60 text-[#93000a] font-bold focus:ring-4 focus:ring-[#ffdad6] focus:bg-[#ffdad6]/40 rounded-2xl p-4 outline-none transition-all"
                     value={formData.quantidade_minima} onChange={(e) => setFormData({...formData, quantidade_minima: parseFloat(e.target.value)})}
                   />
                 </div>
@@ -197,52 +245,54 @@ export default function Estoque() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button" onClick={() => setShowForm(false)}
-                  className="flex-1 bg-white hover:bg-sage-50 text-sage-700 px-4 py-3 rounded-xl font-bold border border-sage-100 transition-all"
+                  className="flex-1 bg-white hover:bg-sage-50 text-sage-700 px-4 py-3 rounded-xl transition-all font-bold border border-sage-100"
                 >Cancelar</button>
                 <button
                   type="submit"
-                  className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl font-bold shadow-sm transition-all"
-                >Salvar Item</button>
+                  className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl transition-all font-bold shadow-sm"
+                >{editingId ? "Salvar Alterações" : "Salvar Item"}</button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* GRID DO INVENTÁRIO (No Design: Lista ou Grade) */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {estoqueFiltrado.length === 0 ? (
-           <div className="col-span-full text-center p-10 bg-white rounded-3xl border border-sage-100/50 text-sage-500 font-medium">
-             Nada encontrado. Cadastre itens ou mude seus termos de busca.
+           <div className="col-span-full text-center p-12 bg-sage-50/30 border border-sage-100/50 rounded-3xl">
+             <Package className="w-16 h-16 text-sage-300 mx-auto mb-4" />
+             <p className="text-sage-600/70 font-bold">Nada encontrado. Cadastre itens ou mude seus termos de busca.</p>
            </div>
         ) : (
           estoqueFiltrado.map((item) => (
-            <div key={item.id} className="group bg-white rounded-3xl p-6 shadow-[0_4px_25px_rgba(21,66,18,0.03)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              
+            <div 
+              key={item.id} 
+              onClick={() => openFormEdit(item)}
+              className="group bg-white rounded-[2rem] p-6 shadow-[0_4px_25px_rgba(21,66,18,0.03)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden"
+            >
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
-                  {/* Ícone Dinâmico semântico */}
                   <div className="bg-sage-50 p-4 rounded-2xl">
                     {getCategoryIcon(item.categoria)}
                   </div>
                   <div>
-                    <h3 className="text-xl font-black font-manrope text-sage-700 tracking-tight">{item.item}</h3>
-                    <p className="text-sage-400 font-bold uppercase tracking-wider text-[10px] mt-1">{item.categoria}</p>
+                    <h3 className="text-2xl font-black font-manrope text-sage-800 tracking-tight leading-tight">{item.item}</h3>
+                    <p className="text-sage-400 font-bold uppercase tracking-widest text-[10px] mt-1">{item.categoria}</p>
                   </div>
                 </div>
                 
-                {/* Lógica condicional (IF): Se tem pouca quantidade, fica com cápsula de destaque vermelha */}
                 {item.quantidade <= item.quantidade_minima && (
-                  <span className="bg-[#ffdad6] text-[#ba1a1a] text-[10px] uppercase font-bold px-3 py-1 rounded-full animate-pulse">
+                  <span className="bg-[#ffdad6] text-[#ba1a1a] text-[10px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full animate-pulse border border-[#ffb4ab]">
                     Faltando
                   </span>
                 )}
               </div>
 
-              <div className="flex justify-between items-end">
+              <div className="flex justify-between items-end border-t border-sage-50/50 pt-5 mt-auto">
                 <div>
-                  <p className="text-sm font-bold text-sage-400 uppercase tracking-widest mb-1">Volume</p>
-                  <div className="flex items-baseline gap-1">
+                  <p className="text-[10px] font-bold text-sage-700/60 uppercase tracking-widest mb-1">Volume Disponível</p>
+                  <div className="flex items-baseline gap-1.5">
                     <span className={`text-4xl font-black font-manrope tracking-tighter ${
                       item.quantidade <= item.quantidade_minima ? "text-[#ba1a1a]" : "text-sage-700"
                     }`}>
@@ -250,13 +300,6 @@ export default function Estoque() {
                     </span>
                     <span className="text-sage-500 font-bold">{item.unidade}</span>
                   </div>
-                </div>
-
-                {/* Ações (Aparecem só no hover em desktop) */}
-                <div className="flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleDelete(item.id)} className="p-3 bg-sage-50 hover:bg-[#ffdad6] hover:text-[#ba1a1a] text-sage-400 rounded-xl transition-colors">
-                    <Trash2 className="w-5 h-5" />
-                  </button>
                 </div>
               </div>
 
