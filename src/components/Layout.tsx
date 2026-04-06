@@ -51,7 +51,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 // [AULA DE UI/UX] Sem bordas! Apenas trocamos a cor de fundo (surface-container) ao ativar
-                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
+                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-500 ${
                   isActive 
                   ? "bg-white text-sage-700 shadow-sm font-bold" // Card flutuante branco para pino ativo
                   : "text-gray-500 hover:bg-sage-100/50 hover:text-sage-700"
@@ -88,7 +88,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all ${
+              className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-500 rounded-lg ${
                 isActive ? "text-sage-700 font-bold" : "text-gray-400 hover:text-sage-500"
               }`}
             >

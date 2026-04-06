@@ -63,13 +63,21 @@ export default function Estoque() {
   }, []);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showForm) {
+        setShowForm(false);
+      }
+    };
     if (showForm) {
       document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', handleKeyDown);
     } else {
       document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showForm]);
 
@@ -146,7 +154,7 @@ export default function Estoque() {
         
         <button
           onClick={openFormNovo}
-          className="flex items-center gap-2 bg-sage-600 hover:bg-sage-700 text-white px-5 py-3 rounded-2xl transition-all shadow-sm focus:ring-4 focus:ring-sage-100/50 font-bold tracking-wide w-full sm:w-auto justify-center"
+          className="flex items-center gap-2 bg-sage-600 hover:bg-sage-700 text-white px-5 py-3 rounded-2xl transition-all shadow-sm focus:ring-4 focus:ring-sage-100/50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-300 font-bold tracking-wide w-full sm:w-auto justify-center"
         >
           <Plus className="w-5 h-5" />
           Novo Item
@@ -168,15 +176,18 @@ export default function Estoque() {
 
       {showForm && mounted && createPortal(
         <div 
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-estoque-title"
           className="fixed inset-0 bg-sage-700/40 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
         >
           <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black font-manrope text-sage-700">
+              <h2 id="modal-estoque-title" className="text-2xl font-black font-manrope text-sage-700">
                 {editingId ? "Editar Item" : "Registrar Item"}
               </h2>
               {editingId && (
-                <button type="button" onClick={handleDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all" title="Excluir Item">
+                <button type="button" aria-label="Excluir Item" onClick={handleDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500" title="Excluir Item">
                   <Trash2 className="w-5 h-5" />
                 </button>
               )}
@@ -184,19 +195,19 @@ export default function Estoque() {
             
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Nome do Item</label>
+                <label htmlFor="estoque-nome" className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Nome do Item</label>
                 <input
-                  type="text" required placeholder="Ex: Enxada rotativa"
-                  className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all"
+                  id="estoque-nome" type="text" required placeholder="Ex: Enxada rotativa"
+                  className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-200 focus-visible:bg-white rounded-2xl p-4 transition-all"
                   value={formData.item} onChange={(e) => setFormData({...formData, item: e.target.value})}
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Categoria</label>
+                  <label htmlFor="estoque-categoria" className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Categoria</label>
                   <select
-                    className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all"
+                    id="estoque-categoria" className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-200 focus-visible:bg-white rounded-2xl p-4 transition-all"
                     value={formData.categoria} onChange={(e) => setFormData({...formData, categoria: e.target.value})}
                   >
                     <option value="Semente">Sementes / Mudas</option>
@@ -205,9 +216,9 @@ export default function Estoque() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Unidade</label>
+                  <label htmlFor="estoque-unidade" className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Unidade</label>
                   <select
-                    className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all"
+                    id="estoque-unidade" className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-200 focus-visible:bg-white rounded-2xl p-4 transition-all"
                     value={formData.unidade} onChange={(e) => setFormData({...formData, unidade: e.target.value})}
                   >
                     <option value="un">Unidades (un)</option>
@@ -221,18 +232,18 @@ export default function Estoque() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Quantidade Atual</label>
+                  <label htmlFor="estoque-quantidade" className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Quantidade Atual</label>
                   <input
-                    type="number" required min="0" step="0.1"
-                    className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all"
+                    id="estoque-quantidade" type="number" required min="0" step="0.1"
+                    className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-200 focus-visible:bg-white rounded-2xl p-4 transition-all"
                     value={formData.quantidade} onChange={(e) => setFormData({...formData, quantidade: parseFloat(e.target.value)})}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#ba1a1a]/80 mb-2 uppercase tracking-widest">Alerta de Falta (Mínimo)</label>
+                  <label htmlFor="estoque-minima" className="block text-xs font-bold text-[#ba1a1a]/80 mb-2 uppercase tracking-widest">Alerta de Falta (Mínimo)</label>
                   <input
-                    type="number" required min="0" step="0.1"
-                    className="w-full bg-[#ffdad6]/40 border-2 border-transparent hover:bg-[#ffdad6]/60 text-[#93000a] font-bold focus:ring-4 focus:ring-[#ffdad6] focus:bg-[#ffdad6]/40 rounded-2xl p-4 outline-none transition-all"
+                    id="estoque-minima" type="number" required min="0" step="0.1"
+                    className="w-full bg-[#ffdad6]/40 border-2 border-transparent hover:bg-[#ffdad6]/60 text-[#93000a] font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffdad6] focus-visible:bg-[#ffdad6]/40 rounded-2xl p-4 transition-all"
                     value={formData.quantidade_minima} onChange={(e) => setFormData({...formData, quantidade_minima: parseFloat(e.target.value)})}
                   />
                 </div>
@@ -241,11 +252,11 @@ export default function Estoque() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button" onClick={() => setShowForm(false)}
-                  className="flex-1 bg-white hover:bg-sage-50 text-sage-700 px-4 py-3 rounded-xl transition-all font-bold border border-sage-100"
+                  className="flex-1 bg-white hover:bg-sage-50 text-sage-700 px-4 py-3 rounded-xl transition-all font-bold border border-sage-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-200"
                 >Cancelar</button>
                 <button
                   type="submit"
-                  className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl transition-all font-bold shadow-sm"
+                  className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl transition-all font-bold shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-300"
                 >{editingId ? "Salvar Alterações" : "Salvar Item"}</button>
               </div>
             </form>
@@ -262,10 +273,11 @@ export default function Estoque() {
            </div>
         ) : (
           estoqueFiltrado.map((item) => (
-            <div 
+            <button 
               key={item.id} 
+              type="button"
               onClick={() => openFormEdit(item)}
-              className="group bg-white rounded-[2rem] p-6 shadow-[0_4px_25px_rgba(21,66,18,0.03)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden"
+              className="group bg-white rounded-[2rem] p-6 shadow-[0_4px_25px_rgba(21,66,18,0.03)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-300 text-left"
             >
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
@@ -299,7 +311,7 @@ export default function Estoque() {
                 </div>
               </div>
 
-            </div>
+            </button>
           ))
         )}
       </div>

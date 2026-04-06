@@ -46,13 +46,21 @@ export default function Canteiros() {
   }, []);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showForm) {
+        setShowForm(false);
+      }
+    };
     if (showForm) {
       document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', handleKeyDown);
     } else {
       document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showForm]);
 
@@ -150,15 +158,18 @@ export default function Canteiros() {
 
       {showForm && mounted && createPortal(
         <div 
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
           className="fixed inset-0 bg-sage-700/40 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
         >
           <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black font-manrope text-sage-700">
+              <h2 id="modal-title" className="text-2xl font-black font-manrope text-sage-700">
                 {editingId ? "Editar Canteiro" : "Registrar Canteiro"}
               </h2>
               {editingId && (
-                <button type="button" onClick={handleDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all" title="Excluir Canteiro">
+                <button type="button" aria-label="Excluir Canteiro" onClick={handleDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500" title="Excluir Canteiro">
                   <Trash2 className="w-5 h-5" />
                 </button>
               )}
@@ -168,13 +179,13 @@ export default function Canteiros() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Identificação do Lote</label>
-                  <input type="text" required placeholder="Ex: Lote A, Ervas" className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all" value={formData.nome} onChange={(e) => setFormData({...formData, nome: e.target.value})} />
+                  <label htmlFor="canteiro-nome" className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Identificação do Lote</label>
+                  <input id="canteiro-nome" type="text" required placeholder="Ex: Lote A, Ervas" className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-200 focus-visible:bg-white rounded-2xl p-4 transition-all" value={formData.nome} onChange={(e) => setFormData({...formData, nome: e.target.value})} />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Cultura Plantada</label>
-                  <input type="text" required placeholder="Ex: Alface, Manjericão" className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus:ring-4 focus:ring-sage-100 focus:bg-white rounded-2xl p-4 outline-none transition-all" value={formData.cultura} onChange={(e) => setFormData({...formData, cultura: e.target.value})} />
+                  <label htmlFor="canteiro-cultura" className="block text-xs font-bold text-sage-700/60 mb-2 uppercase tracking-widest">Cultura Plantada</label>
+                  <input id="canteiro-cultura" type="text" required placeholder="Ex: Alface, Manjericão" className="w-full bg-sage-50/50 border-2 border-transparent hover:bg-sage-50 text-sage-700 font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-200 focus-visible:bg-white rounded-2xl p-4 transition-all" value={formData.cultura} onChange={(e) => setFormData({...formData, cultura: e.target.value})} />
                 </div>
               </div>
 
@@ -212,8 +223,8 @@ export default function Canteiros() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 bg-white hover:bg-sage-50 text-sage-700 px-4 py-3 rounded-xl transition-all font-bold border border-sage-100">Cancelar</button>
-                <button type="submit" className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl transition-all font-bold shadow-sm">
+                <button type="button" onClick={() => setShowForm(false)} className="flex-1 bg-white hover:bg-sage-50 text-sage-700 px-4 py-3 rounded-xl transition-all font-bold border border-sage-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-200">Cancelar</button>
+                <button type="submit" className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl transition-all font-bold shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-300">
                   {editingId ? "Salvar Alterações" : "Salvar Canteiro"}
                 </button>
               </div>
@@ -231,10 +242,11 @@ export default function Canteiros() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {canteiros.map((canteiro) => (
-            <div 
+            <button 
               key={canteiro.id} 
+              type="button"
               onClick={() => openFormEdit(canteiro)}
-              className="group bg-white rounded-[2rem] p-6 shadow-[0_4px_25px_rgba(21,66,18,0.03)] hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer hover:-translate-y-1 relative overflow-hidden"
+              className="text-left group bg-white rounded-[2rem] p-6 shadow-[0_4px_25px_rgba(21,66,18,0.03)] hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer hover:-translate-y-1 relative overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-300"
             >
 
               <div className="mb-6 pt-2 text-center">
@@ -272,7 +284,7 @@ export default function Canteiros() {
                   </span>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
