@@ -80,7 +80,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         Aparece apenas nas telas de celular (ajudando os voluntários em campo).
         Usamos glass-panel (declarado no globals.css) para um blur flutuante por cima do conteúdo.
       */}
-      <nav className="md:hidden glass-panel fixed bottom-0 left-0 right-0 border-t border-sage-100 z-50 flex justify-around items-center h-20 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+      <nav className="md:hidden bg-white fixed bottom-0 left-0 right-0 border-t border-sage-100 z-50 flex justify-around items-center h-20 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

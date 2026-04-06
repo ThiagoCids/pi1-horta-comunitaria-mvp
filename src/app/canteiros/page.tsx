@@ -151,11 +151,8 @@ export default function Canteiros() {
       {showForm && mounted && createPortal(
         <div 
           className="fixed inset-0 bg-sage-700/40 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowForm(false);
-          }}
         >
-          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default">
+          <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-black font-manrope text-sage-700">
                 {editingId ? "Editar Canteiro" : "Registrar Canteiro"}
