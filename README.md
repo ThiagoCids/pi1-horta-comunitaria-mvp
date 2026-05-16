@@ -63,12 +63,25 @@ Comanda exaustivamente o catálogo almoxarifado agrícola.
 *   `unidade` *(string)*: Medida quantificadora textual unitária livre (Kg, cm, L, Un).
 *   `data_atualizacao` *(string ou null)*: Timestamp referencial sobre atualização.
 
+### Arquitetura Front-end e Clean Code
+
+O projeto passou por uma **refatoração arquitetural** para separar responsabilidades seguindo o princípio de *Separation of Concerns*:
+
+*   **`/src/components`** — Componentes visuais puros ("componentes burros"). Recebem dados via `props` e renderizam a interface. Não acessam banco de dados. Exemplos: `CanteiroCard`, `EstoqueForm`, `StatCard`.
+*   **`/src/hooks`** — Custom Hooks com toda a lógica CRUD do Supabase, gerenciamento de estado e processamento de dados: `useCanteiros`, `useEstoque`, `useDashboard`, `useRelatorios`.
+*   **`/src/types`** — Tipagem TypeScript centralizada em arquivo único, eliminando duplicação.
+*   **`/src/lib`** — Configuração do cliente Supabase (`supabase.ts`), único ponto de contato com o backend.
+
+**Resultado:** Páginas reduzidas de ~300 para ~40-80 linhas, alta testabilidade, reutilização de lógica e manutenibilidade a longo prazo.
+
 ---
 
 ## 🤖 Engenharia Acelerada por IA (Mecanismo Antigravity)
 Uma premissa de alto impacto e inovação tecnológica neste projeto é a inclusão assertiva do desenvolvimento acelerado por Inteligência Artificial — o método *AI-Agentic Pair Programming*. Utilizando extensamente o ecossistema corporativo avançado **Antigravity** do time Google Deepmind rodando embarcado no prompt de comando:
 
 *   **O Impacto da Produtividade:** A IA atuou paralelamente ao engenheiro, não apenas gerando linhas, mas aplicando lógicas arquiteturais. Tarefas metódicas (como criar a conformidade total de todos os pop-ups aos padrões de Acessibilidade da W3C ativados por Teclado e Leitor de Tela) ou recriar reatividades de CSS para celulares que consumiriam dias de laboratório, foram realizadas a 4-mãos em fração da carga horária padrão. Isso re-humanizou o foco do desenvolvedor de apenas um compilador físico para um estrategista das lógicas do agronegócio.
+
+> 📄 **Transparência Acadêmica:** Para garantir a total transparência acadêmica e demonstrar a engenharia de prompts aplicada, os detalhes das fases de desenvolvimento com IA e os prompts estratégicos utilizados estão registrados no arquivo anexo **[DOCUMENTACAO_IA.md](./DOCUMENTACAO_IA.md)**.
 
 ---
 

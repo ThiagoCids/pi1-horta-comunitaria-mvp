@@ -49,6 +49,23 @@ Comanda o catálogo vivo de insumos agrícolas:
 *   `unidade` *(string)*: Medida quantificadora textual, em litros (L), kilos (kg) ou unidades inteiras.
 *   `data_atualizacao` *(string ou null)*: Guarda o momento automático de atualização de item para o gestor.
 
+### 3.3. Arquitetura Front-end e Clean Code
+
+Após a fase inicial de desenvolvimento, o projeto passou por um processo rigoroso de **refatoração arquitetural** visando separar responsabilidades e garantir a manutenibilidade do código a longo prazo. Essa abordagem segue o princípio de *Separation of Concerns* (Separação de Interesses), amplamente documentado na literatura de engenharia de software.
+
+A reestruturação dividiu o código em quatro camadas bem definidas:
+
+*   **`/src/components` — UI Visual (Componentes Apresentacionais):** Contém exclusivamente os componentes de interface, chamados de *"componentes burros"* na terminologia do React. Eles recebem dados via `props` e se limitam a renderizar a tela. Não possuem nenhuma lógica de acesso ao banco de dados. Exemplos: `CanteiroCard`, `EstoqueForm`, `StatCard`, `LoadingSpinner`.
+*   **`/src/hooks` — Lógica de Negócios (Custom Hooks):** Toda a inteligência da aplicação — chamadas CRUD ao Supabase, gerenciamento de estado, filtros e processamento de dados — foi extraída das páginas para **Custom Hooks** reutilizáveis. São eles: `useCanteiros` (CRUD de canteiros), `useEstoque` (CRUD de estoque + filtro de busca), `useDashboard` (agregação de KPIs) e `useRelatorios` (processamento de dados para gráficos).
+*   **`/src/types` — Tipagem Centralizada:** Todos os tipos TypeScript do projeto (`Canteiro`, `EstoqueItem`, `DashboardSummary`, etc.) foram consolidados em um único arquivo `index.ts`, eliminando duplicação e garantindo consistência.
+*   **`/src/lib` — Configurações de Infraestrutura:** Contém exclusivamente a configuração do cliente Supabase (`supabase.ts`), sendo o único ponto de contato com o serviço externo.
+
+**Benefícios observados com a refatoração:**
+1.  **Testabilidade:** Os hooks podem ser testados isoladamente sem a necessidade de renderizar componentes visuais.
+2.  **Reutilização:** Um mesmo hook pode ser consumido por múltiplas páginas ou componentes.
+3.  **Legibilidade:** As páginas foram reduzidas de ~300 linhas para ~40-80 linhas, facilitando a compreensão e a revisão de código.
+4.  **Manutenibilidade:** Alterações na lógica de negócios não exigem mudanças nos componentes visuais, e vice-versa.
+
 ---
 
 ## 4. Inovação: Desenvolvimento Baseado em Inteligência Artificial (Antigravity)
@@ -56,6 +73,8 @@ Uma exclusividade essencial para a construção ultrarrápida deste projeto Inte
 
 *   **Por que foi usado?** A programação tradicional de arquiteturas de ponta exige extensos ritos de configuração manual. Ao envolver a Inteligência Artificial diretamente atrelada ao terminal (CLI), buscou-se maximizar a produtividade e reverter semanas de trabalhos sintáticos em dias, mantendo nosso foco unicamente em alinhar regras de negócios sustentáveis e não esbarrar em pormenores de linguagem.
 *   **Resultados obtidos:** Com o auxílio das ferramentas generativas de programação do Antigravity, o próprio código pôde ser constantemente refatorado e higienizado para manter altos padrões do clean-code, bem como aplicar instantaneamente diretrizes severas de Acessibilidade (WCAG), o que humaniza a ferramenta em prazos viáveis só tornados tangíveis através do uso mais assertivo das IAs aliadas à engenharia de software atual.
+
+> 📄 **Transparência Acadêmica:** Para garantir a total transparência acadêmica e demonstrar a engenharia de prompts aplicada, os detalhes das fases de desenvolvimento com IA e os prompts estratégicos utilizados estão registrados no arquivo anexo **[DOCUMENTACAO_IA.md](./DOCUMENTACAO_IA.md)**.
 
 ---
 
