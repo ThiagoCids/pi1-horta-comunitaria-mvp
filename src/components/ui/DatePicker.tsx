@@ -77,7 +77,7 @@ export function DatePicker({ value, onChange, label }: {
       </div>
 
       {isOpen && (
-        <div className="absolute top-1/2 left-1/2 md:top-full md:left-0 -translate-x-1/2 -translate-y-1/2 md:translate-x-0 md:translate-y-0 mt-0 md:mt-2 bg-white rounded-3xl p-5 shadow-[0_10px_40px_rgba(21,66,18,0.15)] border border-sage-100 border-2 z-[999999] w-72 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-1/2 left-1/2 md:top-full md:left-0 -translate-x-1/2 -translate-y-1/2 md:translate-x-0 md:translate-y-0 mt-0 md:mt-2 bg-white rounded-3xl p-5 shadow-[0_10px_40px_rgba(21,66,18,0.15)] border-2 z-[999999] w-72 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex justify-between items-center mb-4">
             <button type="button" onClick={prevMonth} className="p-2 hover:bg-sage-50 text-sage-600 rounded-full transition-all">
               <ChevronLeft className="w-5 h-5" />

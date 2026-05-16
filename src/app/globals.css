@@ -46,11 +46,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 
-  [AULA DE DESIGN] Glassmorphism utilitário:
-  Criamos uma classe customizada (.glass-panel) para gerar aquele efeito de "vidro fosco"
-  bem premium, em vez de usar uma cor sólida e dura. 
-*/
+/* TODO: Verificar se pode ser deletado de forma segura — .glass-panel não é referenciada em nenhum componente atual */
 .glass-panel {
   background: rgba(248, 250, 248, 0.75);
   backdrop-filter: blur(12px);
