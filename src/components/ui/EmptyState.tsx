@@ -1,15 +1,31 @@
-import type { ElementType } from "react";
+/**
+ * ============================================================
+ * COMPONENTE UI: EmptyState.tsx (Estado Vazio)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Renderiza uma mensagem amigável quando não há dados para exibir.
+ * Recebe um ícone e uma mensagem como parâmetros (props).
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * Usado em Canteiros e Estoque quando a lista está vazia.
+ * ============================================================
+ */
+
+import type { LucideIcon } from "lucide-react";
 
 type EmptyStateProps = {
-  icon: ElementType;
+  icon: LucideIcon;
   message: string;
 };
 
 export function EmptyState({ icon: Icon, message }: EmptyStateProps) {
   return (
-    <div className="bg-sage-50/30 border border-sage-100/50 rounded-3xl p-12 text-center">
-      <Icon className="w-16 h-16 text-sage-300 mx-auto mb-4" />
-      <p className="text-sage-600/70 font-bold">{message}</p>
+    <div className="text-center py-16">
+      {/* Ícone grande centralizado */}
+      <Icon className="w-12 h-12 text-sage-200 mx-auto mb-4" />
+      {/* Mensagem explicativa */}
+      <p className="text-sage-500 font-medium max-w-sm mx-auto">{message}</p>
     </div>
   );
 }

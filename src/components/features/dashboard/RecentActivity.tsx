@@ -1,3 +1,19 @@
+/**
+ * ============================================================
+ * COMPONENTE: RecentActivity.tsx (Atividade Recente)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Renderiza uma seção de atividade recente no Dashboard.
+ * Exibe mensagem de boas-vindas se o sistema está vazio,
+ * ou um resumo contextual se já há dados cadastrados.
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * A página Dashboard passa flags indicando se há canteiros
+ * e itens em alerta para personalizar a mensagem.
+ * ============================================================
+ */
+
 type RecentActivityProps = {
   hasCanteiros: boolean;
   hasLowStock: boolean;
@@ -9,6 +25,7 @@ export function RecentActivity({ hasCanteiros, hasLowStock }: RecentActivityProp
       <h2 className="text-2xl font-black font-manrope text-sage-700 tracking-tight mb-4">
         Atividade Recente
       </h2>
+      {/* Mensagem contextual baseada no estado do sistema */}
       {!hasCanteiros && !hasLowStock ? (
         <div className="bg-sage-50/50 p-6 rounded-xl border border-sage-100/50">
           <p className="text-sage-600 font-medium">

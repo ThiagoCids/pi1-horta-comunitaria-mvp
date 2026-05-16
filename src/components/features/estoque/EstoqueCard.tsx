@@ -1,3 +1,18 @@
+/**
+ * ============================================================
+ * COMPONENTE: EstoqueCard.tsx (Card Visual de Item de Estoque)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Renderiza um card para cada item de estoque com nome, categoria,
+ * quantidade e alerta visual quando o estoque está baixo.
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * A página de Estoque renderiza um EstoqueCard para cada item.
+ * Ao clicar no card, abre o formulário de edição via onEdit.
+ * ============================================================
+ */
+
 import type { EstoqueItem } from "@/types";
 import { getCategoryIcon } from "./categoryIcon";
 
@@ -8,6 +23,7 @@ type EstoqueCardProps = {
 
 export function EstoqueCard({ item, onEdit }: EstoqueCardProps) {
   return (
+    // 🚨 PONTO DE ATENÇÃO PARA O VÍDEO: Card clicável que abre o formulário de edição
     <button
       type="button"
       onClick={() => onEdit(item)}
@@ -28,6 +44,7 @@ export function EstoqueCard({ item, onEdit }: EstoqueCardProps) {
           </div>
         </div>
 
+        {/* Badge de alerta — aparece quando quantidade <= mínimo */}
         {item.quantidade <= item.quantidade_minima && (
           <span className="bg-[#ffdad6] text-[#ba1a1a] text-[10px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full animate-pulse border border-[#ffb4ab]">
             Faltando

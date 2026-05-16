@@ -1,3 +1,19 @@
+/**
+ * ============================================================
+ * COMPONENTE: EstoqueForm.tsx (Formulário Modal de Estoque)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Formulário modal para criar ou editar itens de estoque.
+ * Campos: nome, categoria, unidade, quantidade e quantidade mínima.
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * - Recebe dados e funções da página estoque/page.tsx
+ * - onSubmit chama o Supabase (via hook useEstoque) para salvar
+ * - onDelete exclui o item do banco de dados
+ * ============================================================
+ */
+
 import { createPortal } from "react-dom";
 import { Trash2 } from "lucide-react";
 import type { EstoqueFormData } from "@/types";
@@ -41,6 +57,7 @@ export function EstoqueForm({
             {editingId ? "Editar Item" : "Registrar Item"}
           </h2>
           {editingId && (
+            // 🚨 PONTO DE ATENÇÃO PARA O VÍDEO: Botão de excluir — chama onDelete que deleta do Supabase
             <button
               type="button"
               aria-label="Excluir Item"
@@ -53,6 +70,7 @@ export function EstoqueForm({
           )}
         </div>
 
+        {/* 🚨 PONTO DE ATENÇÃO PARA O VÍDEO: O onSubmit decide se faz INSERT ou UPDATE no banco */}
         <form onSubmit={onSubmit} className="space-y-5">
           <div>
             <label
@@ -74,6 +92,7 @@ export function EstoqueForm({
             />
           </div>
 
+          {/* Seletores de categoria e unidade */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label
@@ -119,6 +138,7 @@ export function EstoqueForm({
             </div>
           </div>
 
+          {/* Campos numéricos: quantidade atual e mínima */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label
@@ -176,6 +196,7 @@ export function EstoqueForm({
             >
               Cancelar
             </button>
+            {/* 🚨 PONTO DE ATENÇÃO PARA O VÍDEO: Botão submit que salva o novo insumo no banco */}
             <button
               type="submit"
               className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl transition-all font-bold shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-300"

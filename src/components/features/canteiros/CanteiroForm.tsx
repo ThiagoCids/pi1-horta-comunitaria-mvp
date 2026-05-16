@@ -1,3 +1,21 @@
+/**
+ * ============================================================
+ * COMPONENTE: CanteiroForm.tsx (Formulário Modal de Canteiros)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Renderiza o formulário modal (popup) para criar ou editar canteiros.
+ * Inclui campos para: nome do lote, cultura, datas e status.
+ * Usa createPortal para renderizar o modal diretamente no body do HTML,
+ * garantindo que fique sempre por cima de todos os outros elementos.
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * - Recebe dados e funções via props da página canteiros/page.tsx
+ * - As funções onSubmit e onDelete chamam o Supabase (via hook useCanteiros)
+ * - O DatePicker é um componente reutilizável de src/components/ui
+ * ============================================================
+ */
+
 import { createPortal } from "react-dom";
 import { Trash2 } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -25,16 +43,22 @@ export function CanteiroForm({
   onDelete,
   onClose,
 }: CanteiroFormProps) {
+  // Se o modal não deve ser exibido ou o DOM não está pronto, não renderiza nada
   if (!show || !mounted) return null;
 
+  // createPortal renderiza este elemento diretamente no document.body,
+  // fora da árvore normal do React, para garantir que fique por cima de tudo
   return createPortal(
+    // Overlay escuro semi-transparente que cobre toda a tela
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
       className="fixed inset-0 bg-sage-700/40 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
     >
+      {/* Container branco do formulário */}
       <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default max-h-[90vh] overflow-y-auto">
+        {/* Cabeçalho: título dinâmico + botão de excluir (só aparece em modo edição) */}
         <div className="flex justify-between items-center mb-6">
           <h2
             id="modal-title"
@@ -43,6 +67,7 @@ export function CanteiroForm({
             {editingId ? "Editar Canteiro" : "Registrar Canteiro"}
           </h2>
           {editingId && (
+            // 🚨 PONTO DE ATENÇÃO PARA O VÍDEO: Botão de excluir — chama onDelete que deleta do Supabase
             <button
               type="button"
               aria-label="Excluir Canteiro"
@@ -55,7 +80,10 @@ export function CanteiroForm({
           )}
         </div>
 
+        {/* 🚨 PONTO DE ATENÇÃO PARA O VÍDEO: O onSubmit é chamado quando o formulário é enviado.
+            Ele decide se faz INSERT (criar) ou UPDATE (editar) no banco de dados. */}
         <form onSubmit={onSubmit} className="space-y-5">
+          {/* Campos de texto: nome do lote e cultura */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label
@@ -98,6 +126,7 @@ export function CanteiroForm({
             </div>
           </div>
 
+          {/* Seletores de data usando o componente DatePicker customizado */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <DatePicker
               label="Data do Plantio"
@@ -116,6 +145,7 @@ export function CanteiroForm({
             />
           </div>
 
+          {/* Seletor de status — botões clicáveis com cores dinâmicas */}
           <div className="pt-2">
             <label className="block text-xs font-bold text-sage-700/60 mb-3 uppercase tracking-widest">
               Status Atual do Lote
@@ -141,6 +171,7 @@ export function CanteiroForm({
             </div>
           </div>
 
+          {/* Botões de ação: Cancelar e Salvar */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -149,6 +180,8 @@ export function CanteiroForm({
             >
               Cancelar
             </button>
+            {/* 🚨 PONTO DE ATENÇÃO PARA O VÍDEO: Este botão "submit" envia o formulário,
+                que chama a função handleSubmit do hook useCanteiros para salvar no banco */}
             <button
               type="submit"
               className="flex-1 bg-sage-600 hover:bg-sage-700 text-white px-4 py-3 rounded-xl transition-all font-bold shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-300"

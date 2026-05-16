@@ -1,12 +1,29 @@
+/**
+ * ============================================================
+ * COMPONENTE: VolumeChart.tsx (Gráfico de Pizza — Estoque)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Renderiza um gráfico de pizza (donut chart) usando a biblioteca
+ * Recharts, mostrando a distribuição percentual do estoque por
+ * categoria (Sementes, Insumos, Ferramentas).
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * A página de Relatórios passa os dados processados pelo hook
+ * useRelatorios (que agrupa e calcula os percentuais).
+ * ============================================================
+ */
+
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import type { InsumoData } from "@/types";
 
+// Paleta de cores temáticas para as fatias do gráfico
 const BOTANICAL_COLORS = [
-  "#137333",
-  "#0369a1",
-  "#92400e",
-  "#8c5a2b",
-  "#475569",
+  "#137333",  // Verde escuro
+  "#0369a1",  // Azul
+  "#92400e",  // Marrom
+  "#8c5a2b",  // Terra
+  "#475569",  // Cinza
 ];
 
 type VolumeChartProps = {
@@ -25,7 +42,7 @@ export function VolumeChart({ data }: VolumeChartProps) {
       </p>
 
       <div className="flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-16">
-        {/* Legend side */}
+        {/* Legenda lateral — lista cada categoria com cor e percentual */}
         <div className="flex-1 space-y-3 w-full">
           {data.length > 0 ? (
             data.map((entry, index) => (
@@ -50,7 +67,7 @@ export function VolumeChart({ data }: VolumeChartProps) {
           )}
         </div>
 
-        {/* Chart side */}
+        {/* Gráfico de pizza (donut) — renderizado pela biblioteca Recharts */}
         <div className="relative w-[180px] h-[180px] lg:w-[220px] lg:h-[220px] flex-shrink-0">
           {data.length > 0 ? (
             <>
@@ -78,7 +95,7 @@ export function VolumeChart({ data }: VolumeChartProps) {
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
-              {/* Center text */}
+              {/* Texto centralizado dentro do donut */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-[22px] lg:text-2xl font-black text-sage-800">
                   100%

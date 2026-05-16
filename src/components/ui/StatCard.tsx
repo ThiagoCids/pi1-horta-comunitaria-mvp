@@ -1,45 +1,56 @@
-import type { ElementType } from "react";
+/**
+ * ============================================================
+ * COMPONENTE UI: StatCard.tsx (Card de Estatística)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Renderiza um card de estatística reutilizável com:
+ *  - Título (ex: "Total Registrado")
+ *  - Valor numérico grande
+ *  - Ícone representativo
+ *  - Opção de destaque (highlight) para valores importantes
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * Usado na página Dashboard para exibir os 4 KPIs principais.
+ * ============================================================
+ */
+
+import type { LucideIcon } from "lucide-react";
 
 type StatCardProps = {
   title: string;
   value: number;
-  icon: ElementType;
+  icon: LucideIcon;
   highlight?: boolean;
 };
 
-export function StatCard({ title, value, icon: Icon, highlight = false }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, highlight }: StatCardProps) {
   return (
     <div
-      className={`rounded-3xl p-6 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg ${
+      className={`rounded-[2rem] p-6 shadow-[0_10px_40px_rgba(21,66,18,0.03)] flex flex-col justify-between ${
         highlight
-          ? "bg-sage-700 text-white shadow-[0_15px_40px_rgba(21,66,18,0.2)]"
-          : "bg-white shadow-[0_4px_25px_rgba(21,66,18,0.03)]"
+          ? "bg-sage-600 text-white"
+          : "bg-white text-sage-700"
       }`}
     >
-      <div className="flex flex-col gap-4">
-        <div
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-            highlight ? "bg-white/10 text-white" : "bg-sage-50 text-sage-600"
+      {/* Título do indicador */}
+      <h3
+        className={`text-[10px] font-bold uppercase tracking-widest mb-4 ${
+          highlight ? "text-white/60" : "text-sage-400"
+        }`}
+      >
+        {title}
+      </h3>
+      {/* Valor numérico com ícone ao lado */}
+      <div className="flex items-end justify-between">
+        <span className="text-4xl font-black font-manrope tracking-tighter">
+          {value}
+        </span>
+        <Icon
+          className={`w-5 h-5 ${
+            highlight ? "text-white/30" : "text-sage-300"
           }`}
-        >
-          <Icon className="w-6 h-6" />
-        </div>
-        <div>
-          <p
-            className={`text-sm tracking-widest uppercase font-bold mb-1 ${
-              highlight ? "text-white/70" : "text-sage-700/50"
-            }`}
-          >
-            {title}
-          </p>
-          <p
-            className={`text-5xl font-black font-manrope tracking-tighter ${
-              highlight ? "text-white" : "text-sage-700"
-            }`}
-          >
-            {value}
-          </p>
-        </div>
+        />
       </div>
     </div>
   );

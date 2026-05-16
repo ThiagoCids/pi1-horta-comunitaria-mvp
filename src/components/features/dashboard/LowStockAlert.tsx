@@ -1,3 +1,19 @@
+/**
+ * ============================================================
+ * COMPONENTE: LowStockAlert.tsx (Alerta de Estoque Baixo)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Renderiza um alerta vermelho no Dashboard quando existem itens
+ * de estoque com quantidade abaixo do mínimo configurado.
+ * Lista cada item em falta com a quantidade atual e ideal.
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * A página Dashboard passa a lista de itens em alerta (do hook useDashboard).
+ * Se a lista estiver vazia, o componente não renderiza nada.
+ * ============================================================
+ */
+
 import { AlertTriangle } from "lucide-react";
 import type { EstoqueAlerta } from "@/types";
 
@@ -6,6 +22,7 @@ type LowStockAlertProps = {
 };
 
 export function LowStockAlert({ items }: LowStockAlertProps) {
+  // Se não há itens em alerta, não renderiza nada
   if (items.length === 0) return null;
 
   return (
@@ -17,6 +34,7 @@ export function LowStockAlert({ items }: LowStockAlertProps) {
         <h3 className="text-[#93000a] font-bold text-lg font-manrope tracking-tight">
           Atenção: Estoque Baixo
         </h3>
+        {/* Renderiza a lista de itens em falta */}
         <ul className="mt-2 text-sm text-[#93000a]/80 space-y-1.5">
           {items.map((item) => (
             <li key={item.id} className="flex gap-2 items-center">

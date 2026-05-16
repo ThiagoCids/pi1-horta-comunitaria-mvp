@@ -1,3 +1,17 @@
+/**
+ * ============================================================
+ * COMPONENTE: KpiCards.tsx (Cards de KPI dos Relatórios)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Renderiza os 4 cards de indicadores-chave na tela de Relatórios:
+ * Total de Canteiros, Canteiros Ativos, Itens no Estoque, Itens em Alerta.
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * A página de Relatórios passa os dados processados pelo hook useRelatorios.
+ * ============================================================
+ */
+
 import { Sprout, Leaf, PackageSearch, AlertTriangle } from "lucide-react";
 import type { RelatorioKpis } from "@/types";
 
@@ -8,6 +22,7 @@ type KpiCardsProps = {
 export function KpiCards({ kpis }: KpiCardsProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      {/* Card: Total de Canteiros */}
       <div className="bg-white rounded-[1.5rem] p-6 shadow-[0_2px_15px_rgba(21,66,18,0.03)] flex flex-col justify-between h-[120px]">
         <h3 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest">
           Total de Canteiros
@@ -22,6 +37,7 @@ export function KpiCards({ kpis }: KpiCardsProps) {
         </div>
       </div>
 
+      {/* Card: Canteiros Ativos */}
       <div className="bg-white rounded-[1.5rem] p-6 shadow-[0_2px_15px_rgba(21,66,18,0.03)] flex flex-col justify-between h-[120px]">
         <h3 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest">
           Canteiros Ativos
@@ -36,6 +52,7 @@ export function KpiCards({ kpis }: KpiCardsProps) {
         </div>
       </div>
 
+      {/* Card: Total de Itens no Estoque */}
       <div className="bg-white rounded-[1.5rem] p-6 shadow-[0_2px_15px_rgba(21,66,18,0.03)] flex flex-col justify-between h-[120px]">
         <h3 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest">
           Itens no Estoque
@@ -50,6 +67,7 @@ export function KpiCards({ kpis }: KpiCardsProps) {
         </div>
       </div>
 
+      {/* Card: Itens em Alerta — muda de cor se houver itens em falta */}
       <div
         className={`rounded-[1.5rem] p-6 shadow-[0_2px_15px_rgba(21,66,18,0.03)] flex flex-col justify-between h-[120px] ${
           kpis.itensEmAlerta > 0 ? "bg-[#ffdad6]" : "bg-white"

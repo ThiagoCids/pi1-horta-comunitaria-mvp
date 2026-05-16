@@ -1,20 +1,28 @@
-import { Sprout, Wrench, Package, Droplets } from "lucide-react";
+/**
+ * ============================================================
+ * UTILITÁRIO: categoryIcon.tsx (Ícones por Categoria)
+ * ============================================================
+ *
+ * O QUE ESTE ARQUIVO FAZ:
+ * Retorna o ícone visual correto baseado na categoria do item de estoque.
+ * Cada categoria tem um ícone diferente para facilitar a identificação visual.
+ *
+ * COMO SE CONECTA COM O RESTO DO SISTEMA:
+ * O componente EstoqueCard importa esta função para exibir o ícone
+ * correto ao lado do nome de cada item.
+ * ============================================================
+ */
+
+import { Sprout, Wrench, Leaf } from "lucide-react";
 
 export function getCategoryIcon(categoria: string) {
-  switch (categoria.toLowerCase()) {
-    case "semente":
-    case "mudas":
-      return <Sprout className="w-8 h-8 text-[#2d5a27]" />;
-    case "ferramenta":
-    case "ferramentas":
-      return <Wrench className="w-8 h-8 text-[#4a6549]" />;
-    case "insumo":
-    case "adubo":
-      return <Package className="w-8 h-8 text-[#915905]" />;
-    case "irrigação":
-    case "agua":
-      return <Droplets className="w-8 h-8 text-blue-500" />;
+  switch (categoria) {
+    case "Semente":
+      return <Sprout className="w-6 h-6 text-sage-600" />;     // Ícone de broto para sementes
+    case "Ferramenta":
+      return <Wrench className="w-6 h-6 text-sage-600" />;     // Ícone de ferramenta
+    case "Insumo":
     default:
-      return <Package className="w-8 h-8 text-slate-400" />;
+      return <Leaf className="w-6 h-6 text-sage-600" />;       // Ícone de folha para insumos
   }
 }
